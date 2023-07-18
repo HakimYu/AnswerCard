@@ -1,7 +1,7 @@
 import os
 import re
 
-dir_path = os.path.dirname(os.path.abspath(__file__))  # 指定目录路径
+dir_path = os.path.dirname(os.path.abspath(__file__)) +'/pic' # 指定目录路径
 file_exts = ["jpg", "jpeg", "png", "bmp"]  # 指定文件扩展名
 
 for file_name in os.listdir(dir_path):

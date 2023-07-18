@@ -63,11 +63,11 @@ def adjustBrightnessContrast(img, brightness=0, contrast=0):
 
 def ansList(imgName):
     # 加载一个图片到opencv中
-    img = cv.imread(workingPath + "\\" + imgName)
+    img = cv.imread(workingPath + "\\pic\\" + imgName)
     img = resize(img,1280)
     gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
     gray = cv.GaussianBlur(gray,(5,5),0)
-    # gray = adjustBrightnessContrast(gray,25,100)
+    # gray = adjustBrightnessContrast(gray,20,120)
     # showIMG(gray)
     thresh2 = thresh(gray,131)
     # showIMG(thresh2)
@@ -114,15 +114,15 @@ def ansList(imgName):
             origin_sheet = four_point_transform(img, approx.reshape(4, 2))
             # 透视变换提取灰度图内容部分
             gray_sheet = four_point_transform(gray, approx.reshape(4, 2))
-            showIMG(origin_sheet)
+            # showIMG(origin_sheet)
             # cv.namedWindow('tx',cv.WINDOW_NORMAL)
             # cv.imshow("tx", gray_sheet)
             break
 
     gray_sheet = resize(gray_sheet,1040)
     origin_sheet = resize(origin_sheet,1040)
-    thresh2 = thresh(gray_sheet,251)
-    kernel = cv.getStructuringElement(cv.MORPH_RECT, (3, 3))
+    thresh2 = thresh(gray_sheet,551)
+    kernel = cv.getStructuringElement(cv.MORPH_RECT, (11, 11))
     erosion = cv.erode(thresh2, kernel, iterations = 1)
 
     # showIMG(erosion)
@@ -132,68 +132,71 @@ def ansList(imgName):
     # print("找到轮廓个数：", len(ans_cnt))
 
     # 使用红色标记所有的轮廓
-    # cv.drawContours(ox_sheet,r_cnt,-1,(0,0,255),2)
+    # cv.drawContours(origin_sheet,ans_cnt,-1,(0,0,255),2)
 
-    # listeningAnsCross=[]
-    # readingAnsCross=[]
-    # fillingAnsCross=[]
-    # listeningAns=[]
-    # readingAns=[]
-    # fillingAns=[]
-    # for cross in ans_cnt:
-    #     # 通过矩形，标记每一个指定的轮廓
-    #     x, y, w, h = cv.boundingRect(cross)
-    #     ar = w / float(h)
+    listeningAnsCross=[]
+    readingAnsCross=[]
+    fillingAnsCross=[]
+    listeningAns=[]
+    readingAns=[]
+    fillingAns=[]
+    for cross in ans_cnt:
+        # 通过矩形，标记每一个指定的轮廓
+        x, y, w, h = cv.boundingRect(cross)
+        # ar = w / float(h)
 
-    #     if x>8 and w >= 35 and w <=80 and h >= 30 and h <= 60 and ar >= 0.5 and ar <= 2:
-    #         # 使用红色标记，满足指定条件的图形
-    #         cv.rectangle(origin_sheet, (x, y), (x + w, y + h), (0, 0, 255), 2)
-    #         # cv.putText(origin_sheet, str(x)+ ',' + str(y), (x - 5 , y - 5), cv.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
-    #         if y < 310:
-    #             listeningAnsCross.append(cross)
-    #         elif y<790:
-    #             readingAnsCross.append(cross)
-    #         else:
-    #             fillingAnsCross.append(cross)
-    # # showIMG(origin_sheet)
-    # listeningAnsCross = contours.sort_contours(listeningAnsCross)[0]
-    # readingAnsCross = contours.sort_contours(readingAnsCross)[0]
-    # fillingAnsCross = contours.sort_contours(fillingAnsCross)[0]
-    # for i in listeningAnsCross:
-    #     x, y, w, h = cv.boundingRect(i)
-    #     if y<110:
-    #         listeningAns.append('A')
-    #     elif y<169:
-    #         listeningAns.append('B')
-    #     else:
-    #         listeningAns.append("C")
-    # for i in readingAnsCross:
-    #     x, y, w, h = cv.boundingRect(i)
-    #     if y<390:
-    #         readingAns.append('A')
-    #     elif y<450:
-    #         readingAns.append('B')
-    #     elif y<505:
-    #         readingAns.append("C")
-    #     elif y<560:
-    #         readingAns.append("D")
-    #     elif y<610:
-    #         readingAns.append("E")
-    #     elif y<670:
-    #         readingAns.append("F")
-    #     else:
-    #         readingAns.append("G")
-    # for i in fillingAnsCross:
-    #     x, y, w, h = cv.boundingRect(i)
-    #     if y<850:
-    #         fillingAns.append('A')
-    #     elif y<910:
-    #         fillingAns.append('B')
-    #     elif y<965:
-    #         fillingAns.append("C")
-    #     else:
-    #         fillingAns.append("D")
-    # return ([listeningAns,readingAns,fillingAns],origin_sheet)
+        if x>8 and w >= 30 and w <=80 and h >= 15 and h <= 60:
+            #  and ar >= 0.5 and ar <= 3
+            # 标记
+            # cv.putText(origin_sheet, str(x)+ ',' + str(y), (x - 5 , y - 5), cv.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
+            if y < 310:
+                cv.rectangle(origin_sheet, (x, y), (x + w, y + h), (0, 0, 255), 2)
+                listeningAnsCross.append(cross)
+            elif y<790:
+                cv.rectangle(origin_sheet, (x, y), (x + w, y + h), (0, 0, 255), 2)
+                readingAnsCross.append(cross)
+            else:
+                cv.rectangle(origin_sheet, (x, y), (x + w, y + h), (0, 0, 255), 2)
+                fillingAnsCross.append(cross)
+    # showIMG(origin_sheet)
+    listeningAnsCross = contours.sort_contours(listeningAnsCross)[0]
+    readingAnsCross = contours.sort_contours(readingAnsCross)[0]
+    fillingAnsCross = contours.sort_contours(fillingAnsCross)[0]
+    for i in listeningAnsCross:
+        x, y, w, h = cv.boundingRect(i)
+        if y<110:
+            listeningAns.append('A')
+        elif y<169:
+            listeningAns.append('B')
+        else:
+            listeningAns.append("C")
+    for i in readingAnsCross:
+        x, y, w, h = cv.boundingRect(i)
+        if y<390:
+            readingAns.append('A')
+        elif y<450:
+            readingAns.append('B')
+        elif y<505:
+            readingAns.append("C")
+        elif y<560:
+            readingAns.append("D")
+        elif y<610:
+            readingAns.append("E")
+        elif y<670:
+            readingAns.append("F")
+        else:
+            readingAns.append("G")
+    for i in fillingAnsCross:
+        x, y, w, h = cv.boundingRect(i)
+        if y<850:
+            fillingAns.append('A')
+        elif y<910:
+            fillingAns.append('B')
+        elif y<965:
+            fillingAns.append("C")
+        else:
+            fillingAns.append("D")
+    return ([listeningAns,readingAns,fillingAns],origin_sheet)
 
 
 
@@ -202,28 +205,36 @@ def worker(imgName):
     finalScore = 0
     ori_sheet = None
     ans = None
+    fail = False
     try:
         ans,ori_sheet = ansList(imgName)
     except Exception as e:
-        print(e)
+        e = e
+        fail = True
     for CANum, CA in enumerate(listeningCA):
         try:
             if ans[0][CANum] == CA:
                 finalScore += 1.5
         except Exception as e:
             e=e
+            fail = True
     for CANum, CA in enumerate(readingCA):
         try:
             if ans[0][CANum] == CA:
                 finalScore += 2.5
         except Exception as e:
             e = e
+            fail = True
     for CANum, CA in enumerate(fillingCA):
         try:
             if ans[0][CANum] == CA:
                 finalScore += 1
         except Exception as e:
             e = e
+            fail = True
+    if fail:
+        with open(workingPath+ "\\result\\" + 'wrong.txt', "w") as file:
+            file.write(filename+'\n')
     if ans!=None:
         # 设置文本信息
         text = str(finalScore)
@@ -242,16 +253,17 @@ def worker(imgName):
 
 img_files = []  # 保存 JPG 文件名的数组
 # 遍历目录下的所有文件
-for filename in os.listdir(workingPath):
+for filename in os.listdir(workingPath + '\\pic'):
     # 判断是否为 JPG 文件
     if filename.lower().endswith('.jpg'):
         # 将文件名保存到数组中
         img_files.append(filename)
 
-# with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
-#     feautures = []
-#     for i in img_files:
-#         feautures.append(executor.submit(worker, i))
-ansList('/pic/43792.jpg')
+# ansList('4378.jpg')
 
-cv.waitKey(0)
+with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
+    feautures = []
+    for i in img_files:
+        feautures.append(executor.submit(worker, i))
+
+# cv.waitKey(0)
