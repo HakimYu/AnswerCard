@@ -6,6 +6,7 @@ import numpy as np
 import concurrent.futures
 import os
 import cv2 as cv
+from progress.bar import IncrementalBar
 
 listeningCA = None
 readingCA = None
@@ -261,9 +262,11 @@ for filename in os.listdir(workingPath + '\\pic'):
 
 # ansList('4378.jpg')
 
-with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
-    feautures = []
+futures = []
+with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
     for i in img_files:
-        feautures.append(executor.submit(worker, i))
-
+        futures.append(executor.submit(worker, i))
+    with IncrementalBar('Processing', max=len(futures)) as bar:
+        for future in concurrent.futures.as_completed(futures):
+            bar.next()
 # cv.waitKey(0)
