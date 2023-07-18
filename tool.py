@@ -2,6 +2,7 @@
 from time import time
 from imutils.perspective import four_point_transform
 from imutils import contours
+import numpy as np
 import concurrent.futures
 import os
 import cv2 as cv
@@ -48,36 +49,54 @@ def thresh(img,size):
     '''对图像二值化'''
     return cv.adaptiveThreshold(img, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY_INV, size, 4)
 
+def adjustBrightnessContrast(img, brightness=0, contrast=0):
+    # 调整亮度和对比度
+    b = brightness / 255.0
+    c = contrast / 255.0
+    k = np.tan((45 + 44 * c) / 180 * np.pi)
+    img = (img - 127.5 * (1 - b)) * k + 127.5 * (1 + b)
+
+    # 对图像进行裁剪，保证像素值在0-255之间
+    img = np.clip(img, 0, 255).astype(np.uint8)
+
+    return img
+
 def ansList(imgName):
     # 加载一个图片到opencv中
     img = cv.imread(workingPath + "\\" + imgName)
     img = resize(img,1280)
     gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
-    '''灰度图片'''
     gray = cv.GaussianBlur(gray,(5,5),0)
-    # thresh2 = thresh(gray,101)
+    # gray = adjustBrightnessContrast(gray,25,100)
+    # showIMG(gray)
+    thresh2 = thresh(gray,131)
+    # showIMG(thresh2)
     # kernel = cv.getStructuringElement(cv.MORPH_RECT, (5, 5))
     # morph = cv.morphologyEx(thresh2, cv.MORPH_CLOSE, kernel)
 
     # showIMG(morph)
 
-    edged = cv.Canny(gray, 35, 200)
+    # edged = cv.Canny(gray, 75, 120)
+    # edged = cv.Canny(morph, 75, 120)
+    # edged = cv.Canny(morph, 20, 40)
 
     # showIMG(edged)
 
     # 寻找轮廓
-    cts, hierarchy = cv.findContours(edged.copy(), cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
+    cts, hierarchy = cv.findContours(thresh2.copy(), cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
     # cts, hierarchy = cv.findContours(thresh2.copy(), cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
 
     # 给轮廓加标记，便于我们在原图里面观察，注意必须是原图才能画出红色，灰度图是没有颜色的
-    cv.drawContours(img, cts, -1, (0, 0, 255), 7)
+    # cv.drawContours(img, cts, -1, (0, 0, 255), 7)
 
     # showIMG(img)
 
 
     # # 按面积大小对所有的轮廓排序
     list = sorted(cts, key=cv.contourArea, reverse=True)
+    # cv.drawContours(img, list[0], -1, (0, 0, 255), 7)
 
+    # showIMG(img)
     # # print("寻找轮廓的个数：", len(cts))
 
     for c in list:
@@ -88,19 +107,21 @@ def ansList(imgName):
         # 打印定点个数
         # print("顶点个数：", len(approx))
         if len(approx) == 4:  # 矩形
+            # cv.drawContours(img, c, -1, (0, 0, 255), 7)
+
+            # showIMG(img)
             # 透视变换提取原图内容部分
             origin_sheet = four_point_transform(img, approx.reshape(4, 2))
             # 透视变换提取灰度图内容部分
-            grey_sheet = four_point_transform(gray, approx.reshape(4, 2))
-            # cv.namedWindow('ox', cv.WINDOW_NORMAL)
-            # cv.imshow("ox", ox_sheet)
+            gray_sheet = four_point_transform(gray, approx.reshape(4, 2))
+            showIMG(origin_sheet)
             # cv.namedWindow('tx',cv.WINDOW_NORMAL)
-            # cv.imshow("tx", tx_sheet)
+            # cv.imshow("tx", gray_sheet)
             break
 
-    grey_sheet = resize(grey_sheet,1040)
+    gray_sheet = resize(gray_sheet,1040)
     origin_sheet = resize(origin_sheet,1040)
-    thresh2 = thresh(grey_sheet,251)
+    thresh2 = thresh(gray_sheet,251)
     kernel = cv.getStructuringElement(cv.MORPH_RECT, (3, 3))
     erosion = cv.erode(thresh2, kernel, iterations = 1)
 
@@ -113,69 +134,69 @@ def ansList(imgName):
     # 使用红色标记所有的轮廓
     # cv.drawContours(ox_sheet,r_cnt,-1,(0,0,255),2)
 
-    listeningAnsCross=[]
-    readingAnsCross=[]
-    fillingAnsCross=[]
-    listeningAns=[]
-    readingAns=[]
-    fillingAns=[]
-    for cross in ans_cnt:
-        # 通过矩形，标记每一个指定的轮廓
-        x, y, w, h = cv.boundingRect(cross)
-        ar = w / float(h)
+    # listeningAnsCross=[]
+    # readingAnsCross=[]
+    # fillingAnsCross=[]
+    # listeningAns=[]
+    # readingAns=[]
+    # fillingAns=[]
+    # for cross in ans_cnt:
+    #     # 通过矩形，标记每一个指定的轮廓
+    #     x, y, w, h = cv.boundingRect(cross)
+    #     ar = w / float(h)
 
-        if x>8 and w >= 35 and w <=80 and h >= 30 and h <= 60 and ar >= 0.5 and ar <= 2:
-            # 使用红色标记，满足指定条件的图形
-            cv.rectangle(origin_sheet, (x, y), (x + w, y + h), (0, 0, 255), 2)
-            # cv.putText(origin_sheet, str(x)+ ',' + str(y), (x - 5 , y - 5), cv.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
-            if y < 310:
-                listeningAnsCross.append(cross)
-            elif y<790:
-                readingAnsCross.append(cross)
-            else:
-                fillingAnsCross.append(cross)
-    # showIMG(origin_sheet)
-    listeningAnsCross = contours.sort_contours(listeningAnsCross)[0]
-    readingAnsCross = contours.sort_contours(readingAnsCross)[0]
-    fillingAnsCross = contours.sort_contours(fillingAnsCross)[0]
-    for i in listeningAnsCross:
-        x, y, w, h = cv.boundingRect(i)
-        if y<110:
-            listeningAns.append('A')
-        elif y<169:
-            listeningAns.append('B')
-        else:
-            listeningAns.append("C")
-    for i in readingAnsCross:
-        x, y, w, h = cv.boundingRect(i)
-        if y<390:
-            readingAns.append('A')
-        elif y<450:
-            readingAns.append('B')
-        elif y<505:
-            readingAns.append("C")
-        elif y<560:
-            readingAns.append("D")
-        elif y<610:
-            readingAns.append("E")
-        elif y<670:
-            readingAns.append("F")
-        else:
-            readingAns.append("G")
-    for i in fillingAnsCross:
-        x, y, w, h = cv.boundingRect(i)
-        if y<850:
-            fillingAns.append('A')
-        elif y<910:
-            fillingAns.append('B')
-        elif y<965:
-            fillingAns.append("C")
-        else:
-            fillingAns.append("D")
-    return ([listeningAns,readingAns,fillingAns],origin_sheet)
+    #     if x>8 and w >= 35 and w <=80 and h >= 30 and h <= 60 and ar >= 0.5 and ar <= 2:
+    #         # 使用红色标记，满足指定条件的图形
+    #         cv.rectangle(origin_sheet, (x, y), (x + w, y + h), (0, 0, 255), 2)
+    #         # cv.putText(origin_sheet, str(x)+ ',' + str(y), (x - 5 , y - 5), cv.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
+    #         if y < 310:
+    #             listeningAnsCross.append(cross)
+    #         elif y<790:
+    #             readingAnsCross.append(cross)
+    #         else:
+    #             fillingAnsCross.append(cross)
+    # # showIMG(origin_sheet)
+    # listeningAnsCross = contours.sort_contours(listeningAnsCross)[0]
+    # readingAnsCross = contours.sort_contours(readingAnsCross)[0]
+    # fillingAnsCross = contours.sort_contours(fillingAnsCross)[0]
+    # for i in listeningAnsCross:
+    #     x, y, w, h = cv.boundingRect(i)
+    #     if y<110:
+    #         listeningAns.append('A')
+    #     elif y<169:
+    #         listeningAns.append('B')
+    #     else:
+    #         listeningAns.append("C")
+    # for i in readingAnsCross:
+    #     x, y, w, h = cv.boundingRect(i)
+    #     if y<390:
+    #         readingAns.append('A')
+    #     elif y<450:
+    #         readingAns.append('B')
+    #     elif y<505:
+    #         readingAns.append("C")
+    #     elif y<560:
+    #         readingAns.append("D")
+    #     elif y<610:
+    #         readingAns.append("E")
+    #     elif y<670:
+    #         readingAns.append("F")
+    #     else:
+    #         readingAns.append("G")
+    # for i in fillingAnsCross:
+    #     x, y, w, h = cv.boundingRect(i)
+    #     if y<850:
+    #         fillingAns.append('A')
+    #     elif y<910:
+    #         fillingAns.append('B')
+    #     elif y<965:
+    #         fillingAns.append("C")
+    #     else:
+    #         fillingAns.append("D")
+    # return ([listeningAns,readingAns,fillingAns],origin_sheet)
 
 
-# cv.waitKey(0)
+
 
 def worker(imgName):
     finalScore = 0
@@ -184,30 +205,30 @@ def worker(imgName):
     try:
         ans,ori_sheet = ansList(imgName)
     except Exception as e:
-        print('anslist')
+        print(e)
     for CANum, CA in enumerate(listeningCA):
         try:
             if ans[0][CANum] == CA:
                 finalScore += 1.5
         except Exception as e:
-            print()
+            e=e
     for CANum, CA in enumerate(readingCA):
         try:
             if ans[0][CANum] == CA:
                 finalScore += 2.5
         except Exception as e:
-            print()
+            e = e
     for CANum, CA in enumerate(fillingCA):
         try:
             if ans[0][CANum] == CA:
                 finalScore += 1
         except Exception as e:
-            print()
+            e = e
     if ans!=None:
         # 设置文本信息
-        text = finalScore
+        text = str(finalScore)
         font = cv.FONT_HERSHEY_SIMPLEX
-        font_scale = 1
+        font_scale = 4
         thickness = 2
         color = (0, 0, 255)
         # 获取文本大小
@@ -227,7 +248,10 @@ for filename in os.listdir(workingPath):
         # 将文件名保存到数组中
         img_files.append(filename)
 
-with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
-    feautures = []
-    for i in img_files:
-        feautures.append(executor.submit(worker, i))
+# with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+#     feautures = []
+#     for i in img_files:
+#         feautures.append(executor.submit(worker, i))
+ansList('/pic/43792.jpg')
+
+cv.waitKey(0)
