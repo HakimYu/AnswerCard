@@ -56,10 +56,8 @@ def adjustBrightnessContrast(img, brightness=0, contrast=0):
     c = contrast / 255.0
     k = np.tan((45 + 44 * c) / 180 * np.pi)
     img = (img - 127.5 * (1 - b)) * k + 127.5 * (1 + b)
-
     # 对图像进行裁剪，保证像素值在0-255之间
     img = np.clip(img, 0, 255).astype(np.uint8)
-
     return img
 
 def ansList(imgName):
@@ -72,33 +70,19 @@ def ansList(imgName):
     # showIMG(gray)
     thresh2 = thresh(gray,131)
     # showIMG(thresh2)
-    # kernel = cv.getStructuringElement(cv.MORPH_RECT, (5, 5))
-    # morph = cv.morphologyEx(thresh2, cv.MORPH_CLOSE, kernel)
-
-    # showIMG(morph)
-
-    # edged = cv.Canny(gray, 75, 120)
-    # edged = cv.Canny(morph, 75, 120)
-    # edged = cv.Canny(morph, 20, 40)
-
-    # showIMG(edged)
 
     # 寻找轮廓
     cts, hierarchy = cv.findContours(thresh2.copy(), cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
-    # cts, hierarchy = cv.findContours(thresh2.copy(), cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
-
     # 给轮廓加标记，便于我们在原图里面观察，注意必须是原图才能画出红色，灰度图是没有颜色的
     # cv.drawContours(img, cts, -1, (0, 0, 255), 7)
 
     # showIMG(img)
-
 
     # # 按面积大小对所有的轮廓排序
     list = sorted(cts, key=cv.contourArea, reverse=True)
     # cv.drawContours(img, list[0], -1, (0, 0, 255), 7)
 
     # showIMG(img)
-    # # print("寻找轮廓的个数：", len(cts))
 
     for c in list:
         # 周长，第1个参数是轮廓，第二个参数代表是否是闭环的图形
@@ -260,7 +244,7 @@ for filename in os.listdir(workingPath + '\\pic'):
         # 将文件名保存到数组中
         img_files.append(filename)
 
-# ansList('4378.jpg')
+# ansList('1.jpg')
 
 futures = []
 with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
