@@ -106,7 +106,7 @@ def ansList(imgName):
 
     gray_sheet = resize(gray_sheet,1040)
     origin_sheet = resize(origin_sheet,1040)
-    thresh2 = thresh(gray_sheet,141)
+    thresh2 = thresh(gray_sheet,101)
     kernel = cv.getStructuringElement(cv.MORPH_RECT, (9, 9))
     erosion = cv.erode(thresh2, kernel, iterations = 1)
 
