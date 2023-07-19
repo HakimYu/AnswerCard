@@ -106,8 +106,8 @@ def ansList(imgName):
 
     gray_sheet = resize(gray_sheet,1040)
     origin_sheet = resize(origin_sheet,1040)
-    thresh2 = thresh(gray_sheet,101)
-    kernel = cv.getStructuringElement(cv.MORPH_RECT, (11, 11))
+    thresh2 = thresh(gray_sheet,141)
+    kernel = cv.getStructuringElement(cv.MORPH_RECT, (9, 9))
     erosion = cv.erode(thresh2, kernel, iterations = 1)
 
     # showIMG(erosion)
@@ -190,36 +190,35 @@ def worker(imgName):
     finalScore = 0
     ori_sheet = None
     ans = None
-    fail = False
+    fail = 0
+    # 0 success, 1 length fail, 2 other fail
     try:
         ans,ori_sheet = ansList(imgName)
+        fail = 1 if len(ans[0])!=len(listeningCA) or len(ans[1])!=len(readingCA) or len(ans[2])!=len(fillingCA) else 0
     except Exception as e:
-        e = e
-        fail = True
+        fail = 2
     for CANum, CA in enumerate(listeningCA):
         try:
             if ans[0][CANum] == CA:
                 finalScore += 1.5
         except Exception as e:
-            e=e
-            fail = True
+            fail = 2
     for CANum, CA in enumerate(readingCA):
         try:
             if ans[0][CANum] == CA:
                 finalScore += 2.5
         except Exception as e:
-            e = e
-            fail = True
+            fail = 2
     for CANum, CA in enumerate(fillingCA):
         try:
             if ans[0][CANum] == CA:
                 finalScore += 1
         except Exception as e:
-            e = e
-            fail = True
-    if fail:
+            fail = 2
+    if fail!=0:
+        code=['success','length fail','other fail']
         with open(workingPath+ "\\result\\" + 'wrong.txt', "w") as file:
-            file.write(filename+'\n')
+            file.write(imgName + '/' + code[fail] +'\n')
     if ans!=None:
         # 设置文本信息
         text = str(finalScore)
